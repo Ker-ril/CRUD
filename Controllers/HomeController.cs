@@ -1,5 +1,8 @@
-﻿using CRUD.Models;
+﻿using System;
+using CRUD.Interface;
+using CRUD.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CRUD.Controllers
 {
@@ -7,26 +10,31 @@ namespace CRUD.Controllers
     [ApiController]
     public class HomeController : Controller
     {
-        private static List<Student> _students = new List<Student>
-        {
-            new Student { Id = 1, FirstName = "Viki", LastName = "Babenko", NameOfTheFaculty = "Engineering", StudentNumber = "12345" },
-            new Student { Id = 2, FirstName = "Artem", LastName = "Herasymchuk", NameOfTheFaculty = "Mathematic", StudentNumber = "67890" },
-            new Student { Id = 3, FirstName = "Viki", LastName = "Venher", NameOfTheFaculty = "English", StudentNumber = "13579" },
-            new Student { Id = 4, FirstName = "Natallia", LastName = "Pavliuk", NameOfTheFaculty = "P/A", StudentNumber = "24680" },
-            new Student { Id = 5, FirstName = "Natali", LastName = "Divchur", NameOfTheFaculty = "Mathematic", StudentNumber = "95173" }
-        };
+        private readonly IStudentRepository _studentRepository;
 
+        public HomeController(IStudentRepository studentRepository)
+        {
+            _studentRepository = studentRepository;
+        }
 
         [HttpGet]
         public IActionResult GetAll()
         {
-            return Ok(_students);
+            try
+            {
+                var students = _studentRepository.GetAllStudents();
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
         [HttpGet("{id}", Name = "GetStudent")]
         public IActionResult GetById(int id)
         {
-            var student = _students.Find(s => s.Id == id);
+            var student = _studentRepository.GetStudentById(id);
             if (student == null)
             {
                 return NotFound();
@@ -37,22 +45,31 @@ namespace CRUD.Controllers
         [HttpPost]
         public IActionResult Create(Student student)
         {
-            if (student == null)
+            try
             {
-                return BadRequest("Invalid data");
+                if (student == null)
+                {
+                    return BadRequest("Invalid data");
+                }
+
+                _studentRepository.AddStudent(student);
+
+                return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
             }
-
-            student.Id = _students.Count + 1;
-            _students.Add(student);
-
-            return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"Database Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
-
 
         [HttpPut("{id}")]
         public IActionResult Update(int id, Student updatedStudent)
         {
-            var existingStudent = _students.Find(s => s.Id == id);
+            var existingStudent = _studentRepository.GetStudentById(id);
             if (existingStudent == null)
             {
                 return NotFound();
@@ -60,9 +77,10 @@ namespace CRUD.Controllers
 
             existingStudent.FirstName = updatedStudent.FirstName;
             existingStudent.LastName = updatedStudent.LastName;
-            //existingStudent.DateOfBirth = updatedStudent.DateOfBirth;
             existingStudent.NameOfTheFaculty = updatedStudent.NameOfTheFaculty;
             existingStudent.StudentNumber = updatedStudent.StudentNumber;
+
+            _studentRepository.UpdateStudent(existingStudent);
 
             return NoContent();
         }
@@ -70,14 +88,19 @@ namespace CRUD.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var student = _students.Find(s => s.Id == id);
-            if (student == null)
+            try
             {
-                return NotFound();
+                _studentRepository.DeleteStudent(id);
+                return NoContent();
             }
-
-            _students.Remove(student);
-            return NoContent();
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"Database Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
     }
 }
