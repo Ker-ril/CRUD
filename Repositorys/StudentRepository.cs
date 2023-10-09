@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using CRUD.Interface;
 using CRUD.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CRUD.Repositorys
@@ -16,17 +18,18 @@ namespace CRUD.Repositorys
             _context = context;
         }
 
-        public IEnumerable<Student> GetAllStudents()
+
+        public async Task<IEnumerable<Student>> GetAllStudentsAsync()
         {
-            return _context.Students.ToList();
+            return await _context.Students.ToListAsync();
         }
 
-        public Student GetStudentById(int id)
+        public async Task<Student> GetStudentByIdAsync(int id)
         {
-            return _context.Students.FirstOrDefault(s => s.Id == id);
+            return await _context.Students.FirstOrDefaultAsync(s => s.Id == id);
         }
 
-        public void AddStudent(Student student)
+        public async Task AddStudentAsync(Student student)
         {
             if (student == null)
             {
@@ -34,10 +37,17 @@ namespace CRUD.Repositorys
             }
 
             _context.Students.Add(student);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateStudentAsync(Student student)
+
             _context.SaveChanges();
         }
 
         public void UpdateStudent(Student student)
+
         {
             if (student == null)
             {
@@ -45,17 +55,28 @@ namespace CRUD.Repositorys
             }
 
             _context.Entry(student).State = EntityState.Modified;
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
         }
 
-        public void DeleteStudent(int id)
+        public async Task DeleteStudentAsync(int id)
         {
-            var student = _context.Students.FirstOrDefault(s => s.Id == id);
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == id);
             if (student != null)
             {
                 _context.Students.Remove(student);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
+
+        public Task<ActionResult<Student>> GetStudentIdAsyn(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+            _context.SaveChanges();
+        }
+
+   
     }
 }

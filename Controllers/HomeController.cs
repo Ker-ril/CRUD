@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Threading.Tasks;
 using CRUD.Interface;
 using CRUD.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+
 
 namespace CRUD.Controllers
 {
@@ -18,12 +22,13 @@ namespace CRUD.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task< IActionResult> GetAll()
         {
             try
             {
-                var students = _studentRepository.GetAllStudents();
-                return Ok(students);
+               var students = await _studentRepository.GetAllStudentsAsync();
+
+               return Ok(students);
             }
             catch (Exception ex)
             {
@@ -32,9 +37,12 @@ namespace CRUD.Controllers
         }
 
         [HttpGet("{id}", Name = "GetStudent")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var student = _studentRepository.GetStudentById(id);
+
+            var student = await _studentRepository.GetStudentByIdAsync(id);
+
+          
             if (student == null)
             {
                 return NotFound();
@@ -43,7 +51,7 @@ namespace CRUD.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(Student student)
+        public async Task<IActionResult> Create(Student student)
         {
             try
             {
@@ -52,8 +60,9 @@ namespace CRUD.Controllers
                     return BadRequest("Invalid data");
                 }
 
-                _studentRepository.AddStudent(student);
+               await _studentRepository.AddStudentAsync(student);
 
+             
                 return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
             }
             catch (DbUpdateException ex)
@@ -67,10 +76,12 @@ namespace CRUD.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Student updatedStudent)
+        public async Task<IActionResult> Update(int id, Student updatedStudent)
         {
-            var existingStudent = _studentRepository.GetStudentById(id);
-            if (existingStudent == null)
+
+            var existingStudent = await _studentRepository.GetStudentByIdAsync(id);
+
+           if (existingStudent == null)
             {
                 return NotFound();
             }
@@ -80,18 +91,22 @@ namespace CRUD.Controllers
             existingStudent.NameOfTheFaculty = updatedStudent.NameOfTheFaculty;
             existingStudent.StudentNumber = updatedStudent.StudentNumber;
 
-            _studentRepository.UpdateStudent(existingStudent);
+
+            _studentRepository.UpdateStudentAsync(existingStudent);
+
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task <IActionResult> Delete(int id)
         {
             try
             {
-                _studentRepository.DeleteStudent(id);
-                return NoContent();
+
+               await _studentRepository.DeleteStudentAsync(id);
+
+                             return NoContent();
             }
             catch (DbUpdateException ex)
             {
