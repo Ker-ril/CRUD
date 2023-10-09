@@ -1,5 +1,11 @@
-﻿using CRUD.Models;
+﻿using System;
+using System.Threading.Tasks;
+using CRUD.Interface;
+using CRUD.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
 
 namespace CRUD.Controllers
 {
@@ -7,26 +13,33 @@ namespace CRUD.Controllers
     [ApiController]
     public class HomeController : Controller
     {
-        private static List<Student> _students = new List<Student>
+        private readonly IStudentRepository _studentRepository;
+
+
+        public HomeController(IStudentRepository studentRepository)
         {
-            new Student { Id = 1, FirstName = "Viki", LastName = "Babenko", NameOfTheFaculty = "Engineering", StudentNumber = "12345" },
-            new Student { Id = 2, FirstName = "Artem", LastName = "Herasymchuk", NameOfTheFaculty = "Mathematic", StudentNumber = "67890" },
-            new Student { Id = 3, FirstName = "Viki", LastName = "Venher", NameOfTheFaculty = "English", StudentNumber = "13579" },
-            new Student { Id = 4, FirstName = "Natallia", LastName = "Pavliuk", NameOfTheFaculty = "P/A", StudentNumber = "24680" },
-            new Student { Id = 5, FirstName = "Natali", LastName = "Divchur", NameOfTheFaculty = "Mathematic", StudentNumber = "95173" }
-        };
+            _studentRepository = studentRepository;
+        }
 
 
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task< IActionResult> GetAll()
         {
-            return Ok(_students);
+            try
+            {
+                var students = await _studentRepository.GetAllStudentsAsync();
+                return Ok(students);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
         [HttpGet("{id}", Name = "GetStudent")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var student = _students.Find(s => s.Id == id);
+            var student = await _studentRepository.GetStudentByIdAsync(id);
             if (student == null)
             {
                 return NotFound();
@@ -35,24 +48,34 @@ namespace CRUD.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(Student student)
+        public async Task<IActionResult> Create(Student student)
         {
-            if (student == null)
+            try
             {
-                return BadRequest("Invalid data");
+                if (student == null)
+                {
+                    return BadRequest("Invalid data");
+                }
+
+               await _studentRepository.AddStudentAsync(student);
+
+                return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
             }
-
-            student.Id = _students.Count + 1;
-            _students.Add(student);
-
-            return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"Database Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
 
 
         [HttpPut("{id}")]
-        public IActionResult Update(int id, Student updatedStudent)
+        public async Task<IActionResult> Update(int id, Student updatedStudent)
         {
-            var existingStudent = _students.Find(s => s.Id == id);
+            var existingStudent = await _studentRepository.GetStudentByIdAsync(id);
             if (existingStudent == null)
             {
                 return NotFound();
@@ -60,24 +83,30 @@ namespace CRUD.Controllers
 
             existingStudent.FirstName = updatedStudent.FirstName;
             existingStudent.LastName = updatedStudent.LastName;
-            //existingStudent.DateOfBirth = updatedStudent.DateOfBirth;
             existingStudent.NameOfTheFaculty = updatedStudent.NameOfTheFaculty;
             existingStudent.StudentNumber = updatedStudent.StudentNumber;
+
+            _studentRepository.UpdateStudentAsync(existingStudent);
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task <IActionResult> Delete(int id)
         {
-            var student = _students.Find(s => s.Id == id);
-            if (student == null)
+            try
             {
-                return NotFound();
+               await _studentRepository.DeleteStudentAsync(id);
+                return NoContent();
             }
-
-            _students.Remove(student);
-            return NoContent();
+            catch (DbUpdateException ex)
+            {
+                return StatusCode(500, $"Database Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
     }
 }
