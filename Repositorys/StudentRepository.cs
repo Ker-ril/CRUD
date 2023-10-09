@@ -18,6 +18,7 @@ namespace CRUD.Repositorys
             _context = context;
         }
 
+
         public async Task<IEnumerable<Student>> GetAllStudentsAsync()
         {
             return await _context.Students.ToListAsync();
@@ -36,10 +37,17 @@ namespace CRUD.Repositorys
             }
 
             _context.Students.Add(student);
+
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateStudentAsync(Student student)
+
+            _context.SaveChanges();
+        }
+
+        public void UpdateStudent(Student student)
+
         {
             if (student == null)
             {
@@ -47,6 +55,7 @@ namespace CRUD.Repositorys
             }
 
             _context.Entry(student).State = EntityState.Modified;
+
             await _context.SaveChangesAsync();
         }
 
@@ -64,5 +73,10 @@ namespace CRUD.Repositorys
         {
             throw new NotImplementedException();
         }
+
+            _context.SaveChanges();
+        }
+
+   
     }
 }

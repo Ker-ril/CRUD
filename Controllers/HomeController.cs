@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
+
 namespace CRUD.Controllers
 {
     [Route("api/[controller]")]
@@ -15,20 +16,19 @@ namespace CRUD.Controllers
     {
         private readonly IStudentRepository _studentRepository;
 
-
         public HomeController(IStudentRepository studentRepository)
         {
             _studentRepository = studentRepository;
         }
-
 
         [HttpGet]
         public async Task< IActionResult> GetAll()
         {
             try
             {
-                var students = await _studentRepository.GetAllStudentsAsync();
-                return Ok(students);
+               var students = await _studentRepository.GetAllStudentsAsync();
+
+               return Ok(students);
             }
             catch (Exception ex)
             {
@@ -39,7 +39,10 @@ namespace CRUD.Controllers
         [HttpGet("{id}", Name = "GetStudent")]
         public async Task<IActionResult> GetById(int id)
         {
+
             var student = await _studentRepository.GetStudentByIdAsync(id);
+
+          
             if (student == null)
             {
                 return NotFound();
@@ -59,6 +62,7 @@ namespace CRUD.Controllers
 
                await _studentRepository.AddStudentAsync(student);
 
+             
                 return CreatedAtRoute("GetStudent", new { id = student.Id }, student);
             }
             catch (DbUpdateException ex)
@@ -71,12 +75,13 @@ namespace CRUD.Controllers
             }
         }
 
-
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, Student updatedStudent)
         {
+
             var existingStudent = await _studentRepository.GetStudentByIdAsync(id);
-            if (existingStudent == null)
+
+           if (existingStudent == null)
             {
                 return NotFound();
             }
@@ -86,7 +91,9 @@ namespace CRUD.Controllers
             existingStudent.NameOfTheFaculty = updatedStudent.NameOfTheFaculty;
             existingStudent.StudentNumber = updatedStudent.StudentNumber;
 
+
             _studentRepository.UpdateStudentAsync(existingStudent);
+
 
             return NoContent();
         }
@@ -96,8 +103,10 @@ namespace CRUD.Controllers
         {
             try
             {
+
                await _studentRepository.DeleteStudentAsync(id);
-                return NoContent();
+
+                             return NoContent();
             }
             catch (DbUpdateException ex)
             {

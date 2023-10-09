@@ -1,4 +1,6 @@
+using CRUD.Interface;
 using CRUD.Models;
+using CRUD.Repositorys;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -8,8 +10,11 @@ namespace CRUD
     {
         public static void Main(string[] args)
         {
+
+          
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
             builder.Services.AddDbContext<StudentContext>(item => item.UseSqlServer(builder.Configuration.GetConnectionString("StudentDB")));
 
             builder.Services.AddControllers();
@@ -18,6 +23,7 @@ namespace CRUD
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            //
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())

@@ -1,4 +1,5 @@
 ﻿using CRUD.Models;
+
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System;
@@ -8,6 +9,7 @@ namespace CRUD.Interface
 {
     public interface IStudentRepository
     {
+
         Task<IEnumerable<Student>> GetAllStudentsAsync();
         Task<Student> GetStudentByIdAsync(int id);
         Task AddStudentAsync(Student student);
